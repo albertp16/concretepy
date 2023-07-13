@@ -1,0 +1,25 @@
+{
+    "project_name" : "Makati Life Nurture Medical Center <i>Formerly Ospital ng Makati District 1</i>",
+    "project_location" : "Malugay Street, Barangay Bel Air, Makati City ",
+    "designer" : "Engr. Albert Pamonag, M.Eng",
+    "l" : 7.32,
+    "w" : 305,
+    "d" : 546,
+    "h" : 609.6,
+    "fc" : 34.5,
+    "fy" : 414,
+    "Mn" : 361,
+    "db" : 28.6,
+    "Es" : 200,
+    "exposure" : {
+        "condition" : "interior",
+        "fiber" : "carbon"
+    },
+    "frp" : {
+        "tf" : 1.02,
+        "ffu" : 621,
+        "efu" : 0.015,
+        "Ef" : 37000,
+        "psi_f" : 0.85
+    }
+}
