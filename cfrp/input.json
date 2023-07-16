@@ -3,23 +3,37 @@
     "project_location" : "Malugay Street, Barangay Bel Air, Makati City ",
     "designer" : "Engr. Albert Pamonag, M.Eng",
     "l" : 7.32,
-    "w" : 305,
-    "d" : 546,
-    "h" : 609.6,
+    "b" : 305,
+    "d" : 609.5,
+    "h" : 609.5,
     "fc" : 34.5,
     "fy" : 414,
     "Mn" : 361,
-    "db" : 28.6,
+    "n_bot" : 3,
+    "db" : 25,
+    "dbs" : 12,
     "Es" : 200,
+    "loads" : {
+        "existing" : {
+            "dl" : 98,
+            "ll" : 117
+        },
+        "anticipated" : {
+            "dl" : 98,
+            "ll" : 176
+        }
+    },
     "exposure" : {
         "condition" : "interior",
         "fiber" : "carbon"
     },
     "frp" : {
+        "w" : 305,
+        "n" : 2,
         "tf" : 1.02,
         "ffu" : 621,
         "efu" : 0.015,
-        "Ef" : 37000,
+        "Ef" : 37,
         "psi_f" : 0.85
     }
 }
