@@ -8,6 +8,7 @@
 
 ConcreteDesignPy is a Python library for designing and analyzing reinforced concrete structures, supporting NSCP 2015 and ACI 318-19. The library provides structural engineers with efficient design tools for flexure, shear, axial loads, and moment interaction.
 
+Disclaimer: This library is still under development as an open-source project. Users are responsible for verifying the accuracy and applicability of the results before applying them to real-world engineering problems. The developers do not assume liability for any errors or misuse of the tool.
 ---
 
 ## 📥 **Installation**
