@@ -1,8 +1,8 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='bsdspy',
-    version='0.1.6',
+    name='concretedesignpy',
+    version='0.1',
     description='This APEC internal use only for Concrete Design using ACI and NSCP',
     author='Albert Pamonag',
     author_email='albert@apeconsultancy.net',

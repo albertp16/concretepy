@@ -1,0 +1,6 @@
+setup.py
+concretedesignpy.egg-info/PKG-INFO
+concretedesignpy.egg-info/SOURCES.txt
+concretedesignpy.egg-info/dependency_links.txt
+concretedesignpy.egg-info/requires.txt
+concretedesignpy.egg-info/top_level.txt
