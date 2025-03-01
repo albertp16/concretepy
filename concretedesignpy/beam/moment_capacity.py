@@ -10,9 +10,10 @@
 #   This script processes rebar data using a vectorized NumPy approach to compute 
 #   the cross-sectional area for each rebar entry.
 
-import math
+# import math
 import numpy as np
-import concretedesignpy as conc  
+# import general as gen
+import concretedesignpy as gen  
 
 def process_rebar_data(rebar_list):
     """
@@ -47,10 +48,14 @@ def process_rebar_data(rebar_list):
     diams = np.array([r["diam"] for r in rebar_list], dtype=float)
     nums  = np.array([r["num"]  for r in rebar_list],  dtype=int)
 
+    print(ds)
+    print(diams)
+    print(nums)
+
     # 2) Compute areas in one vector operation
     #    area_i = π * (diam_i / 2)^2 * num_i
-    area = conc.circle_area_diam(diams,2)
-    areas = conc.steel_area(area,nums)
+    area_i = gen.area_diam(diam_i)
+    areas = gen.steel_area(area_i,num_i)
     # areas = math.pi * (diams / 2.0)**2 * nums
 
     # 3) Build output list of dict and the report
@@ -84,7 +89,7 @@ rebars = [
 
 
 
-# print(process_rebar_data(rebars)['value'])
+print(process_rebar_data(rebars)['value'])
 
 def calculate_rebar_forces(
     rebar_list, beam_height, beam_width,

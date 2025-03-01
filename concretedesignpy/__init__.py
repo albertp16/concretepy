@@ -1,1 +1,1 @@
-from .general import circle_area_diam, steel_area, area_ratio
+from .general import area_diam, steel_area, area_ratio

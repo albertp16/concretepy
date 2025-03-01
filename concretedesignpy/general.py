@@ -12,7 +12,7 @@ This code is open-source and licensed under the MIT License.
 
 import math
 
-def circle_area_diam(diameter: float) -> float:
+def area_diam(diameter: float) -> float:
     """
     Return the cross-sectional area of a circle given its diameter.
 
