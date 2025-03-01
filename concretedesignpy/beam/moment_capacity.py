@@ -10,9 +10,7 @@
 #   This script processes rebar data using a vectorized NumPy approach to compute 
 #   the cross-sectional area for each rebar entry.
 
-# import math
 import numpy as np
-# import general as gen
 import concretedesignpy as gen  
 
 def process_rebar_data(rebar_list):
@@ -21,7 +19,7 @@ def process_rebar_data(rebar_list):
     ----------
     rebar_list : list of dict
         A list of dictionaries, where each dictionary must have the following keys:
-            - "d"    (float): The distance of the rebar from a reference point , unit in millimeters
+            - "d"    (float): The distance of the rebar from a reference point in millimeters.
             - "diam" (float): The diameter of the rebar in mm.
             - "num"  (int)  : The number of rebars of that diameter and location.
         Example:
@@ -43,22 +41,22 @@ def process_rebar_data(rebar_list):
         "report" : str
             A human-readable multi-line string summarizing the computed values for each entry.
     """
-    # 1) Extract columns from the list of dicts into NumPy arrays
+    # Extract columns into NumPy arrays.
     ds    = np.array([r["d"]    for r in rebar_list], dtype=float)
     diams = np.array([r["diam"] for r in rebar_list], dtype=float)
     nums  = np.array([r["num"]  for r in rebar_list],  dtype=int)
 
-    print(ds)
-    print(diams)
-    print(nums)
+    print("Distances:", ds)
+    print("Diameters:", diams)
+    print("Counts:   ", nums)
 
-    # 2) Compute areas in one vector operation
-    #    area_i = π * (diam_i / 2)^2 * num_i
-    area_i = gen.area_diam(diam_i)
-    areas = gen.steel_area(area_i,num_i)
-    # areas = math.pi * (diams / 2.0)**2 * nums
+    area_diam_vectorized = np.vectorize(gen.area_diam)
+    steel_area_vectorized = np.vectorize(gen.steel_area)
+    
+    area_each = area_diam_vectorized(diams)
+    areas = steel_area_vectorized(area_each, nums)
 
-    # 3) Build output list of dict and the report
+    # Build output list and report.
     processed = []
     lines = ["rebar data (d, diam, num, as):"]
 
@@ -82,14 +80,6 @@ def process_rebar_data(rebar_list):
         "report": "\n".join(lines)
     }
 
-rebars = [
-        {'d': 58,  'diam': 16, 'num': 2},  # top (compression) bars
-        {'d': 342, 'diam': 16, 'num': 3},  # bottom (tension) bars
-]
-
-
-
-print(process_rebar_data(rebars)['value'])
 
 def calculate_rebar_forces(
     rebar_list, beam_height, beam_width,
