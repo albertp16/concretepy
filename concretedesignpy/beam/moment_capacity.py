@@ -12,6 +12,7 @@
 
 import math
 import numpy as np
+import concretedesignpy as conc  
 
 def process_rebar_data(rebar_list):
     """
@@ -48,7 +49,9 @@ def process_rebar_data(rebar_list):
 
     # 2) Compute areas in one vector operation
     #    area_i = π * (diam_i / 2)^2 * num_i
-    areas = math.pi * (diams / 2.0)**2 * nums
+    area = conc.circle_area_diam(diams,2)
+    areas = conc.steel_area(area,nums)
+    # areas = math.pi * (diams / 2.0)**2 * nums
 
     # 3) Build output list of dict and the report
     processed = []
