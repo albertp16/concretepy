@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Module: transverse_reinforcements.py
+Module: shear.py
 
 This module provides functions to validate design parameters for transverse
 reinforcements according to Section 418.6.4. It includes validations for the
