@@ -28,6 +28,9 @@ def steel_yield_strain(fy, es):
     }
 
 def calculate_beta_one(fc):
+    '''
+    TODO Add provisions from NSCP 2015
+    '''
     if fc < 17:
         raise ValueError("fc < 17 MPa is out of scope for this formula.")
     if 17 <= fc <= 28:
