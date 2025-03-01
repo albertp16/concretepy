@@ -1,14 +1,32 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# 
-# MIT License
-# 
-# Author: Albert Pamonag
-# Year: 2023
-#
-# Description:
-#   This script processes rebar data using a vectorized NumPy approach to compute 
-#   the cross-sectional area for each rebar entry.
+"""
+MIT License
+
+Copyright (c) 2025 Albert Pamonag
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights 
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell 
+copies of the Software, and to permit persons to whom the Software is 
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in 
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN 
+THE SOFTWARE.
+
+-------------------------------------------------------------------------------
+This module provides functions to compute the confined concrete strength and 
+its associated factors following (primarily) RC Concrete Moment Capacity.
+"""
 
 import numpy as np
 import concretedesignpy as gen  
@@ -406,73 +424,73 @@ def calculate_rebar_forces(
     }
 
 
-def example_usage():
-    """
-    Example usage of the calculate_rebar_forces function
-    with a hypothetical beam and reinforcement layout.
-    """
+# def example_usage():
+#     """
+#     Example usage of the calculate_rebar_forces function
+#     with a hypothetical beam and reinforcement layout.
+#     """
 
-    # Sample rebar layout (mm, mm²):
-    # Suppose we have:
-    #   - One layer of compression bars near top: d ~ 50 mm from top, total As=400 mm²
-    #   - Two layers of tension bars near bottom:
-    #       * First layer at d ~ 450 mm: As=804 mm²
-    #       * Second layer at d ~ 470 mm: As=804 mm²
-    #
-    # Distances (d) are measured from the top of the beam.
-    # Rebar area in mm² is the sum of the bars in that layer.
-    rebar_list = [
-        {"d": 50.0,  "as": 400.0},  # Compression bars
-        {"d": 450.0, "as": 804.0},  # Tension bars (layer 1)
-        {"d": 470.0, "as": 804.0},  # Tension bars (layer 2)
-    ]
+#     # Sample rebar layout (mm, mm²):
+#     # Suppose we have:
+#     #   - One layer of compression bars near top: d ~ 50 mm from top, total As=400 mm²
+#     #   - Two layers of tension bars near bottom:
+#     #       * First layer at d ~ 450 mm: As=804 mm²
+#     #       * Second layer at d ~ 470 mm: As=804 mm²
+#     #
+#     # Distances (d) are measured from the top of the beam.
+#     # Rebar area in mm² is the sum of the bars in that layer.
+#     rebar_list = [
+#         {"d": 50.0,  "as": 400.0},  # Compression bars
+#         {"d": 450.0, "as": 804.0},  # Tension bars (layer 1)
+#         {"d": 470.0, "as": 804.0},  # Tension bars (layer 2)
+#     ]
 
-    # Beam dimensions (mm)
-    beam_height = 500.0
-    beam_width = 300.0
+#     # Beam dimensions (mm)
+#     beam_height = 500.0
+#     beam_width = 300.0
 
-    # Material properties
-    fc = 30.0       # MPa (concrete compressive strength)
-    fy = 400.0      # MPa (steel yield strength)
-    es = 200000.0   # MPa (steel modulus of elasticity; typical ~ 200,000 MPa)
-    ecu = 0.003     # ultimate concrete strain
-    beta_one = 0.85 # Whitney stress block parameter
-    alpha_2 = 0.85  # factor for the equivalent concrete stress block
+#     # Material properties
+#     fc = 30.0       # MPa (concrete compressive strength)
+#     fy = 400.0      # MPa (steel yield strength)
+#     es = 200000.0   # MPa (steel modulus of elasticity; typical ~ 200,000 MPa)
+#     ecu = 0.003     # ultimate concrete strain
+#     beta_one = 0.85 # Whitney stress block parameter
+#     alpha_2 = 0.85  # factor for the equivalent concrete stress block
 
-    result = calculate_rebar_forces(
-        rebar_list=rebar_list,
-        beam_height=beam_height,
-        beam_width=beam_width,
-        fc=fc,
-        fy=fy,
-        es=es,
-        ecu=ecu,
-        beta_one=beta_one,
-        alpha_2=alpha_2,
-        max_outer_iterations=50
-    )
+#     result = calculate_rebar_forces(
+#         rebar_list=rebar_list,
+#         beam_height=beam_height,
+#         beam_width=beam_width,
+#         fc=fc,
+#         fy=fy,
+#         es=es,
+#         ecu=ecu,
+#         beta_one=beta_one,
+#         alpha_2=alpha_2,
+#         max_outer_iterations=50
+#     )
 
-    # Print the final solution
-    print("=== FINAL SOLUTION ===")
-    print(f"Neutral axis depth (x)      : {result['neutral_axis']:.2f} mm")
-    print(f"Concrete compression (N)    : {result['fc_concrete']:.2f}")
-    print(f"Steel compression (N)       : {result['fc_rebar']:.2f}")
-    print(f"Steel tension (N)           : {result['fs_rebar']:.2f}")
-    print(f"Ratio (C/T)                 : {result['ratio']:.3f}\n")
+#     # Print the final solution
+#     print("=== FINAL SOLUTION ===")
+#     print(f"Neutral axis depth (x)      : {result['neutral_axis']:.2f} mm")
+#     print(f"Concrete compression (N)    : {result['fc_concrete']:.2f}")
+#     print(f"Steel compression (N)       : {result['fc_rebar']:.2f}")
+#     print(f"Steel tension (N)           : {result['fs_rebar']:.2f}")
+#     print(f"Ratio (C/T)                 : {result['ratio']:.3f}\n")
 
-    # Optionally, inspect the iteration data
-    print("=== ITERATION DATA (showing only the last few) ===")
-    for row in result["iteration_data"][-5:]:  # last 5 entries
-        print(
-            f"Pass {row['pass']:2d} | "
-            f"Iter {row['iteration']:2d} | "
-            f"x={row['x']:.2f} mm | "
-            f"Fconcrete={row['fc_concrete_kN']:.3f} kN | "
-            f"FcompSteel={row['fc_rebar_kN']:.3f} kN | "
-            f"FtensSteel={row['fs_rebar_kN']:.3f} kN | "
-            f"Ratio={row['ratio']:.3f}"
-        )
+#     # Optionally, inspect the iteration data
+#     print("=== ITERATION DATA (showing only the last few) ===")
+#     for row in result["iteration_data"][-5:]:  # last 5 entries
+#         print(
+#             f"Pass {row['pass']:2d} | "
+#             f"Iter {row['iteration']:2d} | "
+#             f"x={row['x']:.2f} mm | "
+#             f"Fconcrete={row['fc_concrete_kN']:.3f} kN | "
+#             f"FcompSteel={row['fc_rebar_kN']:.3f} kN | "
+#             f"FtensSteel={row['fs_rebar_kN']:.3f} kN | "
+#             f"Ratio={row['ratio']:.3f}"
+#         )
 
-# Run the example
-if __name__ == "__main__":
-    example_usage()
+# # Run the example
+# if __name__ == "__main__":
+#     example_usage()
