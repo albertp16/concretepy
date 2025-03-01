@@ -6,7 +6,7 @@
 [![Build Status](https://img.shields.io/github/actions/workflow/status/yourusername/concretedesignpy/test.yml?branch=main)](https://github.com/yourusername/concretedesignpy/actions)
 [![Documentation](https://img.shields.io/badge/docs-online-blue)](https://yourdocslink.com)
 
-ConcreteDesignPy is a Python library for designing and analyzing reinforced concrete structures, supporting NSCP 2015 and ACI 318-19. The library provides structural engineers with efficient design tools for flexure, shear, axial loads, and moment interaction.
+ConcreteDesignPy is a Python library for designing and analyzing reinforced concrete structures, supporting NSCP 2015, ASCE 41, ACI 318-19. The library provides structural engineers with efficient design tools for flexure, shear, axial loads, and moment interaction.
 
 Disclaimer: This library is still under development as an open-source project. Users are responsible for verifying the accuracy and applicability of the results before applying them to real-world engineering problems. The developers do not assume liability for any errors or misuse of the tool.
 ---
@@ -35,44 +35,9 @@ pip install git+https://github.com/yourusername/concretedesignpy.git
 ✔ **Moment Interaction Analysis** for axial & bending  
 ✔ **Error Handling & Design Warnings**  
 
----
-
-## 🔍 **Features in Details**
-
-### 1️⃣ **Manders' Concrete Model**  
-Implements **Manders' Model** to account for the confinement effect in concrete, improving structural efficiency and accuracy in column and beam analysis.
-
-### 2️⃣ **Carbon Fiber Reinforced Polymer (CFRP) Support**  
-Supports **CFRP reinforcement modeling**, considering bond characteristics, failure modes, and strain limitations.
-
-### 3️⃣ **Moment-Interaction Analysis**  
-Generates **moment-axial interaction diagrams** for reinforced concrete columns, incorporating biaxial bending effects and cross-section variability.
 
 ---
-
-<!-- ## 🚀 **Usage Example**
-
-Here's a quick example to compute the moment capacity of a reinforced concrete beam:
-
-```python
-from concretedesignpy import Beam
-
-beam = Beam(b=300, d=600, f'c=28, fy=420, As=1200)  
-moment_capacity = beam.calculate_moment_capacity()
-print(f"Moment Capacity: {moment_capacity} kN·m")
-```
-
-For **column interaction diagrams**:
-
-```python
-from concretedesignpy import Column
-
-column = Column(b=400, h=400, f'c=35, fy=420, As=2000)  
-interaction_curve = column.generate_interaction_diagram()
-interaction_curve.plot()
-```
-
---- -->
+## 📚 **Change Log**  
 
 ## 📚 **Documentation**  
 <!-- For full documentation and API reference, visit: [🔗 Your Docs Here](https://yourdocslink.com) -->
