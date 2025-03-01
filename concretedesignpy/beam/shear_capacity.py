@@ -92,25 +92,57 @@ def validate_max_spacing(db: float, hoop_spacing: float) -> bool:
     return True
 
 
-def calculate_vc(fc,beam_width,eff_depth):
-    '''
-    fc = in MPa
-    beam_with = in mm
-    eff_depth = in mm
-    '''
-    CONSTANT = 1/6
-    value = CONSTANT*math.sqrt(fc)*beam_width*eff_depth
-    return value 
+def calculate_vc(fc: float, beam_width: float, eff_depth: float) -> float:
+    """
+    Calculate the concrete shear capacity (Vc) of a beam.
 
-def calculate_vs(av,fy,eff_depth,spacing):
-    '''
-    av = area of steel reinforcement (shear)
-    fy = yeild strength 
-    s = spacing of shear reinforcement 
-    d = effective depth
-    '''
-    value = (av*fy*eff_depth)/spacing
-    return value
+    The shear capacity is computed using the formula:
+        Vc = (1/6) * sqrt(fc) * beam_width * eff_depth
+
+    Parameters:
+        fc (float): Compressive strength of the concrete in MPa.
+        beam_width (float): Width of the beam in mm.
+        eff_depth (float): Effective depth of the beam in mm.
+
+    Returns:
+        float: The concrete shear capacity.
+    """
+    return (1 / 6) * math.sqrt(fc) * beam_width * eff_depth
+
+def calculate_vs(av: float, fy: float, eff_depth: float, spacing: float) -> float:
+    """
+    Calculate the shear capacity provided by shear reinforcement (Vs).
+
+    The shear reinforcement capacity is computed using the formula:
+        Vs = (Av * fy * eff_depth) / spacing
+
+    Parameters:
+        av (float): Area of the shear reinforcement steel (mm²).
+        fy (float): Yield strength of the shear reinforcement steel in MPa.
+        eff_depth (float): Effective depth of the beam in mm.
+        spacing (float): Spacing of the shear reinforcement in mm.
+
+    Returns:
+        float: The shear reinforcement capacity.
+    """
+    return (av * fy * eff_depth) / spacing
+
+def calculate_ultimate_shear(phi: float, vc: float, vs: float) -> float:
+    """
+    Calculate the ultimate shear capacity of a beam.
+
+    The ultimate shear capacity is computed using the formula:
+        Ultimate Shear = phi * (Vc + Vs)
+
+    Parameters:
+        phi (float): Strength reduction factor (dimensionless).
+        vc (float): Concrete shear capacity.
+        vs (float): Shear reinforcement capacity.
+
+    Returns:
+        float: The ultimate shear capacity.
+    """
+    return phi * (vc + vs)
 
 
 def main():
