@@ -15,15 +15,12 @@ import numpy as np
 
 def process_rebar_data(rebar_list):
     """
-    Fast, vectorized approach to process a list of rebar dictionaries and compute
-    each rebar's cross-sectional area.
-    
     Parameters
     ----------
     rebar_list : list of dict
         A list of dictionaries, where each dictionary must have the following keys:
-            - "d"    (float): The distance of the rebar from a reference point (e.g., cover).
-            - "diam" (float): The diameter of the rebar in mm or inches (depending on units).
+            - "d"    (float): The distance of the rebar from a reference point , unit in millimeters
+            - "diam" (float): The diameter of the rebar in mm.
             - "num"  (int)  : The number of rebars of that diameter and location.
         Example:
             [
