@@ -8,6 +8,8 @@ first hoop location, maximum allowable hoop spacing, and conditions where hoops
 are not required.
 """
 
+import math
+
 def validate_first_hoop(first_hoop_loc: float) -> bool:
     """
     Validates the location of the first hoop relative to the face of the supporting member.
@@ -88,6 +90,28 @@ def validate_max_spacing(db: float, hoop_spacing: float) -> bool:
         print(f"Warning: Provided hoop spacing ({hoop_spacing:.2f} mm) exceeds the limit of {max_spacing:.2f} mm.")
         return False
     return True
+
+
+def calculate_vc(fc,beam_width,eff_depth):
+    '''
+    fc = in MPa
+    beam_with = in mm
+    eff_depth = in mm
+    '''
+    CONSTANT = 1/6
+    value = CONSTANT*math.sqrt(fc)*beam_width*eff_depth
+    return value 
+
+def calculate_vs(av,fy,eff_depth,spacing):
+    '''
+    av = area of steel reinforcement (shear)
+    fy = yeild strength 
+    s = spacing of shear reinforcement 
+    d = effective depth
+    '''
+    value = (av*fy*eff_depth)/spacing
+    return value
+
 
 def main():
     """

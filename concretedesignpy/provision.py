@@ -200,3 +200,5 @@ def calculate_beta_one(fc: float) -> dict:
     # Always consult code if fc > 55 MPa regarding confinement, deflection checks, etc.
 
     return {"value": beta_one, "report": rep}
+
+
