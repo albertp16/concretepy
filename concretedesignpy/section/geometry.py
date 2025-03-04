@@ -229,7 +229,7 @@ if __name__ == "__main__":
     results = compute_rebar_coordinates(width, height, cover, ds, db, nx, ny)
     # print(results)
     section = compute_section_properties_rect(width, height)
-    print(section)
+    # print(section)
     # section_corners = results["section_corners"]
     # stirrup_corners = results["stirrup_corners"]
     # rebar_coords    = results["rebar_coords"]
@@ -249,3 +249,174 @@ if __name__ == "__main__":
 
     # # Plot the cross-section with the rebar layout
     # plot_beam_rebar(width, height, section_corners, stirrup_corners, rebar_coords, show_labels=True)
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+
+def calculate_po(fc, fy, width, height, asteel):
+    """
+    Calculate the axial compression load (Po) for a reinforced concrete column.
+    
+    Parameters:
+    fc : float : Compressive strength of concrete (MPa)
+    fy : float : Yield strength of steel (MPa)
+    width : float : Width of the column (mm)
+    height : float : Height of the column (mm)
+    asteel : list : List of steel reinforcement areas (mm^2)
+    
+    Returns:
+    P0 : float : Axial compression load (N)
+    """
+    # Calculate concrete contribution
+    cc = 0.85 * fc * width * height
+    
+    # Calculate steel contributions
+    cs_total = sum(as_index * (fy - 0.85 * fc) for as_index in asteel)
+    
+    # Total axial compression load
+    value = cc + cs_total
+    
+    return value
+
+def calculate_pt(fy, asteel):
+    """
+    Calculate the axial tensile load (Pt) for a reinforced concrete column.
+    
+    Parameters:
+    fy : float : Yield strength of steel (MPa)
+    asteel : list : List of steel reinforcement areas (mm^2)
+    
+    Returns:
+    Pt : float : Axial tensile load (N)
+    """
+    # Calculate tensile contributions
+    pt = sum(as_index * fy for as_index in asteel)
+    
+    return pt
+
+# Example usage
+fc_prime = 30  # MPa
+fy = 420  # MPa
+b = 600  # mm
+h = 600  # mm
+As_list = [2580, 1290, 1290, 2580]  # mm^2
+
+P0 = calculate_po(fc_prime, fy, b, h, As_list)
+test = calculate_pt(fy,As_list)
+print(test)
+# print(f"Axial Compression Load (P0) = {P0:.2f} N or {P0 / 1000:.2f} kN")
+
+# def plot_PM_interaction():
+#     # Given constants
+#     b = 600.0  # width (mm)
+#     h = 600.0  # depth (mm)
+#     fc = 30.0  # MPa (concrete compressive strength)
+#     fy = 420.0  # MPa (steel yield strength)
+#     Ec = 30000.0  # MPa (concrete elastic modulus)
+#     Es = 200000.0  # MPa (steel elastic modulus)
+#     eps_cu = 0.003    # ultimate concrete strain
+#     eps_y = fy / Es   # steel yield strain (~0.00207)
+
+#     # Rebar layout (depth from top in mm and area in mm^2)
+#     rebar_depths = np.array([75.0, 200.0, 400.0, 525.0])
+#     rebar_areas = np.array([2580.0, 1290.0, 1290.0, 2580.0])
+    
+#     # Define concrete stress-strain behavior (simplified)
+#     def concrete_stress(eps_c):
+#         # eps_c positive for compression
+#         if eps_c <= 0:      # no tension
+#             return 0.0
+#         if eps_c <= 0.002:  # linear up to f'c at 0.002
+#             return (eps_c / 0.002) * fc
+#         elif eps_c <= eps_cu:  # flat top from 0.002 to 0.003
+#             return fc
+#         else:
+#             return 0.0  # beyond 0.003, concrete has crushed (no capacity)
+    
+#     # Lists to store results
+#     P_values = []
+#     M_values = []
+    
+#     # Sweep neutral axis depth from near 0 to a large value
+#     for c in np.linspace(50, 2000, 100):  # mm, 50 to 2000
+#         # print(c)
+#         # Compute concrete compression resultant
+#         # Integrate concrete stress from y=0 to y=c (or h if c > h)
+#         y_max = min(c, h)
+#         # print(y_max)
+#         # Use small slices for integration
+#         n_steps = 100
+#         ys = np.linspace(0, y_max, n_steps)
+#         conc_force = 0.0 # Compression forces
+#         conc_moment_top = 0.0
+#         for y in ys:
+#             eps = eps_cu * (1 - y/c)  # strain at depth y
+#             stress = concrete_stress(eps)
+#             dA = b * (y_max / n_steps)  # differential area (width * slice thickness)
+#             conc_force += stress * dA       # force = stress * area (N, since MPa*mm^2)
+#             conc_moment_top += stress * dA * y  # moment about top = F * y
+
+#         print(conc_force)
+#         # Steel forces
+#         steel_force = 0.0
+#         steel_moment_top = 0.0
+#         for (d_i, A_i) in zip(rebar_depths, rebar_areas):
+#             eps_s = eps_cu * (1 - d_i/c)
+#             # Steel stress
+#             if eps_s >= eps_y:       # yielding in compression
+#                 sigma_s = fy
+#             elif eps_s <= -eps_y:    # yielding in tension
+#                 sigma_s = -fy
+#             else:                    # elastic range
+#                 sigma_s = Es * eps_s
+#             F_si = sigma_s * A_i
+#             steel_force += F_si
+#             steel_moment_top += F_si * d_i
+#         # Total axial force and moment about top
+#         P_int = conc_force + steel_force        # (N)
+#         M_int_top = conc_moment_top + steel_moment_top  # (N·mm)
+#         # Convert moment about top to moment about mid-depth (300 mm)
+#         M_int_mid = M_int_top - P_int * (h/2)
+#         # Store (convert to kN and kN·m for plotting convenience)
+#         P_values.append(P_int / 1000.0)           # kN
+#         M_values.append(abs(M_int_mid) / 1e6)     # kN·m (take abs for positive moment)
+    
+#     # Plot P-M interaction curve
+#     fig, axs = plt.subplots(1, 2, figsize=(10,4))
+#     axs[0].plot(M_values, P_values, color='blue')
+#     axs[0].invert_yaxis()  # invert Y so compression P is plotted downward (optional)
+#     axs[0].set_xlabel("Moment $M$ (kN·m)")
+#     axs[0].set_ylabel("Axial Load $P$ (kN)")
+#     axs[0].set_title("P-M Interaction Diagram")
+#     # Mark balanced, pure bending, pure compression points (optional annotations)
+#     # (One could compute or find indices for these special points for annotation)
+    
+#     # Plot stress-strain curves for concrete and steel
+#     # Concrete from 0 to 0.003, Steel from -0.003 to +0.003
+#     eps_conc = np.linspace(0, 0.003, 100)
+#     sigma_conc = [concrete_stress(eps) for eps in eps_conc]
+#     eps_steel = np.linspace(-0.003, 0.003, 200)
+#     sigma_steel = []
+#     for eps in eps_steel:
+#         if eps >= eps_y:
+#             sigma_steel.append(fy)
+#         elif eps <= -eps_y:
+#             sigma_steel.append(-fy)
+#         else:
+#             sigma_steel.append(Es * eps)
+#     axs[1].plot(eps_conc, sigma_conc, label="Concrete (comp)", color='red')
+#     axs[1].plot(eps_steel, sigma_steel, label="Steel (tension/comp)", color='green')
+#     axs[1].axvline(x=0, color='k', linewidth=0.8)
+#     axs[1].axhline(y=0, color='k', linewidth=0.8)
+#     axs[1].set_xlabel("Strain $\epsilon$")
+#     axs[1].set_ylabel("Stress (MPa)")
+#     axs[1].set_title("Material Stress-Strain Curves")
+#     axs[1].legend()
+#     axs[1].grid(True)
+#     plt.tight_layout()
+#     return fig, axs  # return figure and axes for further use if needed
+
+# # Call the function to compute and get the plots
+# fig, axes = plot_PM_interaction()
+# plt.show()  # This will display the plots when run in an appropriate environment
