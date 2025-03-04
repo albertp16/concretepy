@@ -302,12 +302,45 @@ b = 600  # mm
 h = 600  # mm
 As_list = [2580, 1290, 1290, 2580]  # mm^2
 
-P0 = calculate_po(fc_prime, fy, b, h, As_list)
-test = calculate_pt(fy,As_list)
-print(test)
-# print(f"Axial Compression Load (P0) = {P0:.2f} N or {P0 / 1000:.2f} kN")
+po = calculate_po(fc_prime, fy, b, h, As_list)
+pt = calculate_pt(fy,As_list)
+print(po)
+print(pt)
 
-# def plot_PM_interaction():
+rebar_data = [[2580,1290,1290,2580],[75,200,400,525]] ## [[steel area],[depth from top]] 600x600mm rectangular
+
+def compute_balanced_point(rebar_data, depth, epsilon_y):
+    """
+    Compute the balanced neutral axis depth (C) and strain values (ε_si) for a given set of rebar data.
+
+    Parameters:
+    - rebar_data: List of two lists, first for steel area and second for depth from the top.
+    - d: Total depth of the section.
+    - epsilon_y: Yield strain of the steel.
+
+    Returns:
+    - C: Balanced neutral axis depth in mm.
+    - epsilon_si: List of strain values for each reinforcement layer.
+    """
+    # Extract depths
+    depths = rebar_data[1]
+    
+    # Compute C (neutral axis depth)
+    neutral_axis = (0.003 / (0.003 + epsilon_y)) * depth
+    
+    # Compute strain values for each reinforcement layer
+    epsilon_si = [(neutral_axis - depth_index) / neutral_axis * 0.003 for depth_index in depths]
+    
+    return neutral_axis, epsilon_si
+
+if __name__ == "__main__":
+    d = 600  # Total depth of section in mm
+    epsilon_y = 525 / 200000  # Assuming Young's modulus of steel = 200000 MPa and yield stress = 525 MPa
+
+    # Compute results
+    print(compute_balanced_point(rebar_data, d, epsilon_y))
+
+# def plot_PM_interaction(): 
 #     # Given constants
 #     b = 600.0  # width (mm)
 #     h = 600.0  # depth (mm)
