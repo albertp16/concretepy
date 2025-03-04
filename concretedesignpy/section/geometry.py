@@ -137,6 +137,81 @@ def plot_beam_rebar(width, height, section_corners, stirrup_corners, rebar_coord
     plt.show()
 
 
+
+def compute_section_properties_rect(width, height):
+    """
+    Compute basic section properties for a rectangular cross-section.
+
+    Parameters:
+        width  (b): Width of the rectangle  [mm]
+        height (h): Height of the rectangle [mm]
+
+    Returns:
+        dict: {
+            "Area":                 A,
+            "FirstMomentX":         Qx,
+            "FirstMomentY":         Qy,
+            "MomentInertiaX":       Ix,
+            "MomentInertiaY":       Iy,
+            "RadiusGyrationX":      rx,
+            "RadiusGyrationY":      ry,
+            "SectionModulusX":      Sx,
+            "SectionModulusY":      Sy
+        }
+
+    Notes on axes:
+    - X axis is assumed horizontal, Y axis is vertical.
+    - For the first moments (Qx, Qy), we assume the reference axes are at
+      the bottom (y=0) and left (x=0) edges of the rectangle.
+    - Moments of inertia (Ix, Iy) are about the centroidal axes (X-X' and Y-Y').
+    - Section moduli (Sx, Sy) are based on the centroidal moments of inertia.
+    """
+
+    # 1) Area
+    A = width * height
+
+    # 2) First moment of area about:
+    #    - X axis at y=0 -> Qx = ∫y dA = A*(h/2) = b*h^2 / 2
+    #    - Y axis at x=0 -> Qy = ∫x dA = A*(b/2) = b^2*h / 2
+    Qx = width * (height**2) / 2.0
+    Qy = (width**2) * height / 2.0
+
+    # 3) Moment of inertia about centroidal axes:
+    #    Ix (about horizontal axis through centroid) = b*h^3 / 12
+    #    Iy (about vertical axis through centroid)   = b^3*h / 12
+    Ix = (width * height**3) / 12.0
+    Iy = (width**3 * height) / 12.0
+
+    # 4) Radius of gyration: r = sqrt(I / A)
+    rx = (Ix / A)**0.5
+    ry = (Iy / A)**0.5
+
+    # 5) Section modulus: S = I / (c), where c is distance from centroid to extreme fiber
+    #    For a rectangle: c_x = h/2, c_y = b/2
+    Sx = Ix / (height / 2.0)  # = 2*Ix / h
+    Sy = Iy / (width / 2.0)   # = 2*Iy / b
+
+    return {
+        "area": A,
+        "first_moment": {
+            "x" : Qx,
+            "y" : Qy
+        },
+        "moment_interia" : {
+            "x" : Ix,
+            "y" : Iy
+        },
+        "radius_gyration" : {
+            "x" : rx,
+            "y" : ry
+        },
+        "section_modulus" : {
+            "x" : Sx,
+            "y" : Sy
+        }
+    }
+
+
 # =============================================================================
 # Main Execution Block
 # =============================================================================
@@ -152,22 +227,25 @@ if __name__ == "__main__":
 
     # Compute the rebar coordinates and corners
     results = compute_rebar_coordinates(width, height, cover, ds, db, nx, ny)
-    section_corners = results["section_corners"]
-    stirrup_corners = results["stirrup_corners"]
-    rebar_coords    = results["rebar_coords"]
+    # print(results)
+    section = compute_section_properties_rect(width, height)
+    print(section)
+    # section_corners = results["section_corners"]
+    # stirrup_corners = results["stirrup_corners"]
+    # rebar_coords    = results["rebar_coords"]
 
-    # Print the computed values
-    print("Unconfined (outer) rectangle corners:")
-    for i, corner in enumerate(section_corners, start=1):
-        print(f"  C{i} = {corner}")
+    # # Print the computed values
+    # print("Unconfined (outer) rectangle corners:")
+    # for i, corner in enumerate(section_corners, start=1):
+    #     print(f"  C{i} = {corner}")
 
-    print("\nConfined (inner) rectangle corners (center-line):")
-    for i, corner in enumerate(stirrup_corners, start=1):
-        print(f"  S{i} = {corner}")
+    # print("\nConfined (inner) rectangle corners (center-line):")
+    # for i, corner in enumerate(stirrup_corners, start=1):
+    #     print(f"  S{i} = {corner}")
 
-    print("\nRebar coordinates:")
-    for i, coord in enumerate(rebar_coords, start=1):
-        print(f"  R{i} = {coord}")
+    # print("\nRebar coordinates:")
+    # for i, coord in enumerate(rebar_coords, start=1):
+    #     print(f"  R{i} = {coord}")
 
-    # Plot the cross-section with the rebar layout
-    plot_beam_rebar(width, height, section_corners, stirrup_corners, rebar_coords, show_labels=True)
+    # # Plot the cross-section with the rebar layout
+    # plot_beam_rebar(width, height, section_corners, stirrup_corners, rebar_coords, show_labels=True)
