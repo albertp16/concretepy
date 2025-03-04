@@ -168,7 +168,7 @@ def compute_section_properties_rect(width, height):
     """
 
     # 1) Area
-    A = width * height
+    area = width * height
 
     # 2) First moment of area about:
     #    - X axis at y=0 -> Qx = ∫y dA = A*(h/2) = b*h^2 / 2
@@ -183,8 +183,8 @@ def compute_section_properties_rect(width, height):
     Iy = (width**3 * height) / 12.0
 
     # 4) Radius of gyration: r = sqrt(I / A)
-    rx = (Ix / A)**0.5
-    ry = (Iy / A)**0.5
+    rx = (Ix / area)**0.5
+    ry = (Iy / area)**0.5
 
     # 5) Section modulus: S = I / (c), where c is distance from centroid to extreme fiber
     #    For a rectangle: c_x = h/2, c_y = b/2
@@ -192,7 +192,7 @@ def compute_section_properties_rect(width, height):
     Sy = Iy / (width / 2.0)   # = 2*Iy / b
 
     return {
-        "area": A,
+        "area": area,
         "first_moment": {
             "x" : Qx,
             "y" : Qy
