@@ -453,3 +453,269 @@ if __name__ == "__main__":
 # # Call the function to compute and get the plots
 # fig, axes = plot_PM_interaction()
 # plt.show()  # This will display the plots when run in an appropriate environment
+
+
+# =============================================================================
+# Function: plot_interaction_diagram
+# =============================================================================
+
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.interpolate import make_interp_spline
+
+def calculate_po(fcprime, fy, b, h, as_list):
+    """
+    Calculate the pure axial compression capacity (Po) of a rectangular RC section.
+    
+    1) Compute the concrete contribution:
+       cc = 0.85 * fcprime * b * h
+    2) For each layer of steel As_i, compute:
+       cs_i = As_i * (fy - 0.85 * fcprime)
+    3) Po = cc + sum(cs_i for all layers)
+    """
+    # Concrete contribution
+    cc = 0.85 * fcprime * b * h
+    
+    # Steel contribution
+    cs_list = [As_i * (fy - 0.85 * fcprime) for As_i in as_list]
+    
+    # Sum everything
+    po = cc + sum(cs_list)
+    return po
+
+def calculate_pt(fy, as_list):
+    """
+    Calculate the pure axial tension capacity (Pt) of the same rectangular section.
+    For each layer of steel As_i, compute:
+       ts_i = As_i * fy
+    and sum them.
+    """
+    ts_list = [As_i * fy for As_i in as_list]
+    pt = sum(ts_list)
+    return pt
+
+def generate_as_list(asbar, n_list):
+    """
+    Given a 'base bar area' (asbar) and a list of bar counts (n_list),
+    produce a list of steel areas [as1, as2, ...] = asbar*n1, asbar*n2, ...
+    Automatically ignores any layer with n_i == 0.
+    """
+    return [asbar * n_i for n_i in n_list if n_i > 0]
+
+def generate_depth_list(d_list):
+    """
+    Filter out depths that are 0 or unused.
+    """
+    return [d_i for d_i in d_list if d_i > 0]
+
+if __name__ == "__main__":
+    fcprime  = 30.0       # MPa
+    fy       = 420.0      # MPa
+    Ec       = 30000.0    # MPa
+    Es       = 200000.0   # MPa
+    betafactor = 0.85
+    epsgamma  = 0.00207
+    asbar     = 645.0     # mm^2 (area of one bar)
+    
+    b         = 600.0     # mm
+    h         = 600.0     # mm
+    
+    d_list = [75.0, 200.0, 400.0, 525.0] # Depths from top fiber
+    n_list = [4, 2, 2, 4]                # Number of bars in each layer
+    
+    as_list = generate_as_list(asbar, n_list)
+    d_list  = generate_depth_list(d_list)
+    
+    po = calculate_po(fcprime, fy, b, h, as_list)
+    pt = calculate_pt(fy, as_list)
+    
+    print(f"Pure axial compression load, Po = {po:,.0f} N")
+    print(f"Pure axial tension load,     Pt = {pt:,.0f} N")
+
+def points_on_pm_diagram(fcprime, fy, b, h, betafactor, epsgamma, Es, as_list, d_list):
+    """
+    Computes three special points on the P–M diagram (Balanced, Above-Balanced, Below-Balanced).
+    """
+
+    d_last = d_list[-1]
+
+    # Define c-values
+    c_bal   = (0.003 / (0.003 + epsgamma)) * d_last
+    c_above = d_last
+    c_below = (0.003 / (0.003 + 2.0 * epsgamma)) * d_last
+
+    def compute_pm(c_value, force_last_layer_tension=False):
+        """
+        Computes P, M, and phi for a given neutral axis depth c_value.
+        """
+
+        # 1) Concrete block
+        cc_new = 0.85 * betafactor * fcprime * b * c_value
+
+        compression_list = []
+        tension_list = []
+        f_s_i_list = []
+
+        # Define n_layers here
+        n_layers = len(as_list)
+
+        # Move this loop INSIDE compute_pm
+        for i in range(n_layers):
+            As_i = as_list[i]
+            di   = d_list[i]
+
+            # 2) Compute strain and fs
+            if i == (n_layers - 1) and force_last_layer_tension:
+                # Force last layer in full tension (-fy) for Balanced Case
+                f_s_i = -fy
+            elif abs(c_value - di) < 1e-9:
+                # Exactly on the neutral axis
+                eps_si = 0.0
+                f_s_i = 0.0
+            else:
+                eps_si = ((c_value - di) / c_value) * 0.003
+                f_s_i = Es * eps_si
+                # Clamp fs based on its sign
+                if f_s_i >= 0:
+                    if f_s_i > fy:
+                        f_s_i = fy
+                else:
+                    if abs(f_s_i) > fy:
+                        f_s_i = -fy
+
+            f_s_i_list.append(f_s_i)
+
+            # 3) Compute c_s_i first, decide compression or tension
+            c_s_i = As_i * (f_s_i - 0.85 * fcprime)
+            if c_s_i > 0:
+                compression_list.append((c_s_i, di))
+            else:
+                # If c_s_i is negative, disregard and compute tension steel instead
+                t_s_i = As_i * f_s_i
+                tension_list.append((t_s_i, di))
+
+        # 5) Axial load
+        sum_c = sum([comp[0] for comp in compression_list])
+        sum_t = sum([ten[0] for ten in tension_list])
+        p_val = cc_new + sum_c + sum_t
+
+        # 6) Moment about mid-height
+        M_conc    = cc_new * ((h / 2.0) - (betafactor * c_value) / 2.0)
+        M_c_steel = sum([c_s_i * ((h / 2.0) - di) for (c_s_i, di) in compression_list])
+        M_t_steel = sum([t_s_i * (di - (h / 2.0)) for (t_s_i, di) in tension_list])
+        m_val = M_conc + M_c_steel - M_t_steel
+
+        # 7) reduction factor
+        phi_val = 0.003 / c_value if c_value != 0.0 else 0.0
+
+        return (c_value, p_val, m_val, phi_val, f_s_i_list)
+
+    # Now compute for each special point
+    cB, pB, mB, phiB, fB = compute_pm(c_bal,  force_last_layer_tension=True)
+    cA, pA, mA, phiA, fA = compute_pm(c_above)
+    cL, pL, mL, phiL, fL = compute_pm(c_below)
+
+    return {
+        "balanced": {"c": cB, "P": pB, "M": mB, "phi": phiB, "fs_list": fB},
+        "above":    {"c": cA, "P": pA, "M": mA, "phi": phiA, "fs_list": fA},
+        "below":    {"c": cL, "P": pL, "M": mL, "phi": phiL, "fs_list": fL},
+    }
+
+if __name__ == "__main__":
+    results = points_on_pm_diagram(fcprime, fy, b, h, betafactor, epsgamma, Es, as_list, d_list)
+    pB = results["balanced"]["P"]
+    mB = results["balanced"]["M"]
+    pA = results["above"]["P"]
+    mA = results["above"]["M"]
+    pL = results["below"]["P"]
+    mL = results["below"]["M"]
+
+    for which in ["balanced", "above", "below"]:
+        out = results[which]
+        print(f"{which.upper()} POINT:")
+        print(f"  c = {out['c']:.3f} mm")
+        print(f"  P = {out['P']:.2f} N")
+        print(f"  M = {out['M']:.1f} N·mm")
+        print(f"  φ = {out['phi']:.6f} (1/mm)")
+        print(f"  f_s_i list = {out['fs_list']}\n")
+
+def plot_pm_points_with_curve(po, pt, mB, pB, mA, pA, mL, pL, fcprime, asbar, fy):
+    """
+    The five points are:
+      1) Pure Tension: (0, -Pt) [from Cell 1]
+      2) Below-Balanced: (M_bb, P_bb) [hard-coded]
+      3) Balanced: (M_bal, P_bal) [hard-coded]
+      4) Above-Balanced: (M_ab, P_ab) [hard-coded]
+      5) Pure Compression: (0, +Po) [from Cell 1]
+    
+    The curve is obtained by interpolating these points with a parametric spline.
+    """
+    # Convert
+    Po_kN = po / 1e3        # Pure compression, positive
+    Pt_kN = -(pt / 1e3)     # Pure tension, negative
+    mB_kNm = mB / 1e6
+    pB_kN  = pB / 1e3
+    mA_kNm = mA / 1e6
+    pA_kN  = pA / 1e3
+    mL_kNm = mL / 1e6
+    pL_kN  = pL / 1e3
+    
+    # Assign the points in the chosen order:
+    t_vals = np.array([0, 0.25, 0.5, 0.75, 1])
+    M_points = np.array([0, mL_kNm, mB_kNm, mA_kNm, 0])
+    P_points = np.array([Pt_kN, pL_kN, pB_kN, pA_kN, Po_kN])
+
+    # Create a curve through the points
+    t_fine = np.linspace(0, 1, 300)
+    spline_M = make_interp_spline(t_vals, M_points, k=3)
+    spline_P = make_interp_spline(t_vals, P_points, k=3)
+    M_fine = spline_M(t_fine)
+    P_fine = spline_P(t_fine)
+    
+    # Plotting
+    plt.figure(figsize=(7,7))
+    plt.plot(M_fine, P_fine, 'm-', lw=2)
+    
+    # Plot the five key points
+    plt.plot(0, Pt_kN, 'bo', ms=8, label="Pure Tension (Pt)")
+    plt.text(5, Pt_kN - 100, f"(0.0, {Pt_kN:.1f})", color='blue')
+
+    plt.plot(mL_kNm, pL_kN, 'cs', ms=8, label="Below-Balanced")
+    plt.text(mL_kNm + 20, pL_kN, f"({mL_kNm:.1f}, {pL_kN:.1f})", color='c')
+
+    plt.plot(mB_kNm, pB_kN, 'ks', ms=8, label="Balanced")
+    plt.text(mB_kNm + 20, pB_kN, f"({mB_kNm:.1f}, {pB_kN:.1f})", color='black')
+
+    plt.plot(mA_kNm, pA_kN, 'ys', ms=8, label="Above-Balanced")
+    plt.text(mA_kNm + 20, pA_kN, f"({mA_kNm:.1f}, {pA_kN:.1f})", color='goldenrod')
+
+    plt.plot(0, Po_kN, 'ro', ms=8, label="Pure Compression (Po)")
+    plt.text(5, Po_kN + 100, f"(0.0, {Po_kN:.1f})", color='red')
+
+    # Axes lines, labels, legend
+    plt.axhline(0, color='k', ls='--', lw=0.8)
+    plt.axvline(0, color='k', ls='--', lw=0.8)
+    plt.xlabel("Moment, M (kN·m)")
+    plt.ylabel("Axial Load, P (kN)")
+    plt.title("P–M Interaction Diagram")
+    plt.grid(True)
+    plt.legend(loc='best')
+
+    # Cross Section Information
+    text_str = (
+        "Cross-section properties:\n"
+        f"f'c = {fcprime} MPa\n"
+        f"As  = {asbar} mm^2\n"
+        f"fy  = {fy} MPa"
+    )
+
+    plt.text(0.5, 0.5, text_str,
+             fontsize=10, ha='center', va='center',
+             transform=plt.gca().transAxes,
+             bbox=dict(facecolor='white', alpha=0.7, boxstyle="round"))
+
+    plt.show()
+
+if __name__ == "__main__":
+    
+    plot_pm_points_with_curve(po, pt, mB, pB, mA, pA, mL, pL, fcprime, asbar, fy)
