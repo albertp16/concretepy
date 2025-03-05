@@ -458,7 +458,7 @@ if __name__ == "__main__":
 # =============================================================================
 # Function: plot_interaction_diagram
 # =============================================================================
-
+import math
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.interpolate import make_interp_spline
@@ -689,6 +689,8 @@ if __name__ == "__main__":
     Es         = 200000.0   # MPa
     betafactor = 0.85
     epsgamma   = 0.00207
+    # barsize = 28
+    # asbar = math.pi * math.pow (barsize/2,2)
     asbar      = 645.0      # mm^2 (area of one bar)
     
     # Cross-section geometry
