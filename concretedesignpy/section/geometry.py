@@ -463,6 +463,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.interpolate import make_interp_spline
 
+# -----------------------------
+# Pure Compression and Tension
+# -----------------------------
 def calculate_po(fcprime, fy, b, h, as_list):
     """
     Calculate the pure axial compression capacity (Po) of a rectangular RC section.
@@ -508,35 +511,13 @@ def generate_depth_list(d_list):
     """
     return [d_i for d_i in d_list if d_i > 0]
 
-if __name__ == "__main__":
-    fcprime  = 30.0       # MPa
-    fy       = 420.0      # MPa
-    Ec       = 30000.0    # MPa
-    Es       = 200000.0   # MPa
-    betafactor = 0.85
-    epsgamma  = 0.00207
-    asbar     = 645.0     # mm^2 (area of one bar)
-    
-    b         = 600.0     # mm
-    h         = 600.0     # mm
-    
-    d_list = [75.0, 200.0, 400.0, 525.0] # Depths from top fiber
-    n_list = [4, 2, 2, 4]                # Number of bars in each layer
-    
-    as_list = generate_as_list(asbar, n_list)
-    d_list  = generate_depth_list(d_list)
-    
-    po = calculate_po(fcprime, fy, b, h, as_list)
-    pt = calculate_pt(fy, as_list)
-    
-    print(f"Pure axial compression load, Po = {po:,.0f} N")
-    print(f"Pure axial tension load,     Pt = {pt:,.0f} N")
-
+# -----------------------------
+# P–M Points Calculations
+# -----------------------------
 def points_on_pm_diagram(fcprime, fy, b, h, betafactor, epsgamma, Es, as_list, d_list):
     """
     Computes three special points on the P–M diagram (Balanced, Above-Balanced, Below-Balanced).
     """
-
     d_last = d_list[-1]
 
     # Define c-values
@@ -548,7 +529,6 @@ def points_on_pm_diagram(fcprime, fy, b, h, betafactor, epsgamma, Es, as_list, d
         """
         Computes P, M, and phi for a given neutral axis depth c_value.
         """
-
         # 1) Concrete block
         cc_new = 0.85 * betafactor * fcprime * b * c_value
 
@@ -559,7 +539,7 @@ def points_on_pm_diagram(fcprime, fy, b, h, betafactor, epsgamma, Es, as_list, d
         # Define n_layers here
         n_layers = len(as_list)
 
-        # Move this loop INSIDE compute_pm
+        # Compute for each layer
         for i in range(n_layers):
             As_i = as_list[i]
             di   = d_list[i]
@@ -610,7 +590,7 @@ def points_on_pm_diagram(fcprime, fy, b, h, betafactor, epsgamma, Es, as_list, d
 
         return (c_value, p_val, m_val, phi_val, f_s_i_list)
 
-    # Now compute for each special point
+    # Compute for each special point
     cB, pB, mB, phiB, fB = compute_pm(c_bal,  force_last_layer_tension=True)
     cA, pA, mA, phiA, fA = compute_pm(c_above)
     cL, pL, mL, phiL, fL = compute_pm(c_below)
@@ -621,38 +601,23 @@ def points_on_pm_diagram(fcprime, fy, b, h, betafactor, epsgamma, Es, as_list, d
         "below":    {"c": cL, "P": pL, "M": mL, "phi": phiL, "fs_list": fL},
     }
 
-if __name__ == "__main__":
-    results = points_on_pm_diagram(fcprime, fy, b, h, betafactor, epsgamma, Es, as_list, d_list)
-    pB = results["balanced"]["P"]
-    mB = results["balanced"]["M"]
-    pA = results["above"]["P"]
-    mA = results["above"]["M"]
-    pL = results["below"]["P"]
-    mL = results["below"]["M"]
-
-    for which in ["balanced", "above", "below"]:
-        out = results[which]
-        print(f"{which.upper()} POINT:")
-        print(f"  c = {out['c']:.3f} mm")
-        print(f"  P = {out['P']:.2f} N")
-        print(f"  M = {out['M']:.1f} N·mm")
-        print(f"  φ = {out['phi']:.6f} (1/mm)")
-        print(f"  f_s_i list = {out['fs_list']}\n")
-
+# -----------------------------
+# Plotting the Diagram
+# -----------------------------
 def plot_pm_points_with_curve(po, pt, mB, pB, mA, pA, mL, pL, fcprime, asbar, fy):
     """
     The five points are:
       1) Pure Tension: (0, -Pt) [from Cell 1]
-      2) Below-Balanced: (M_bb, P_bb) [hard-coded]
-      3) Balanced: (M_bal, P_bal) [hard-coded]
-      4) Above-Balanced: (M_ab, P_ab) [hard-coded]
+      2) Below-Balanced: (M_bb, P_bb) [from Cell 2]
+      3) Balanced: (M_bal, P_bal) [from Cell 2]
+      4) Above-Balanced: (M_ab, P_ab) [from Cell 2]
       5) Pure Compression: (0, +Po) [from Cell 1]
     
     The curve is obtained by interpolating these points with a parametric spline.
     """
-    # Convert
+    # Convert units
     Po_kN = po / 1e3        # Pure compression, positive
-    Pt_kN = -(pt / 1e3)     # Pure tension, negative
+    Pt_kN = -(pt / 1e3)      # Pure tension, negative
     mB_kNm = mB / 1e6
     pB_kN  = pB / 1e3
     mA_kNm = mA / 1e6
@@ -660,12 +625,12 @@ def plot_pm_points_with_curve(po, pt, mB, pB, mA, pA, mL, pL, fcprime, asbar, fy
     mL_kNm = mL / 1e6
     pL_kN  = pL / 1e3
     
-    # Assign the points in the chosen order:
+    # Define the key points (in a parametric t-scale)
     t_vals = np.array([0, 0.25, 0.5, 0.75, 1])
     M_points = np.array([0, mL_kNm, mB_kNm, mA_kNm, 0])
     P_points = np.array([Pt_kN, pL_kN, pB_kN, pA_kN, Po_kN])
 
-    # Create a curve through the points
+    # Create a fine parameter for smooth interpolation
     t_fine = np.linspace(0, 1, 300)
     spline_M = make_interp_spline(t_vals, M_points, k=3)
     spline_P = make_interp_spline(t_vals, P_points, k=3)
@@ -674,7 +639,7 @@ def plot_pm_points_with_curve(po, pt, mB, pB, mA, pA, mL, pL, fcprime, asbar, fy
     
     # Plotting
     plt.figure(figsize=(7,7))
-    plt.plot(M_fine, P_fine, 'm-', lw=2)
+    plt.plot(M_fine, P_fine, lw=2)
     
     # Plot the five key points
     plt.plot(0, Pt_kN, 'bo', ms=8, label="Pure Tension (Pt)")
@@ -692,7 +657,7 @@ def plot_pm_points_with_curve(po, pt, mB, pB, mA, pA, mL, pL, fcprime, asbar, fy
     plt.plot(0, Po_kN, 'ro', ms=8, label="Pure Compression (Po)")
     plt.text(5, Po_kN + 100, f"(0.0, {Po_kN:.1f})", color='red')
 
-    # Axes lines, labels, legend
+    # Axes, labels, legend
     plt.axhline(0, color='k', ls='--', lw=0.8)
     plt.axvline(0, color='k', ls='--', lw=0.8)
     plt.xlabel("Moment, M (kN·m)")
@@ -717,5 +682,51 @@ def plot_pm_points_with_curve(po, pt, mB, pB, mA, pA, mL, pL, fcprime, asbar, fy
     plt.show()
 
 if __name__ == "__main__":
+    # Section Properties and Material Data
+    fcprime    = 30.0       # MPa
+    fy         = 420.0      # MPa
+    Ec         = 30000.0    # MPa
+    Es         = 200000.0   # MPa
+    betafactor = 0.85
+    epsgamma   = 0.00207
+    asbar      = 645.0      # mm^2 (area of one bar)
     
+    # Cross-section geometry
+    b = 600.0  # mm
+    h = 600.0  # mm
+    
+    # Reinforcement layout
+    d_list = [75.0, 200.0, 400.0, 525.0]  # Depths from top fiber (mm)
+    n_list = [4, 2, 2, 4]                 # Number of bars in each layer
+    
+    # Generate reinforcement and depth lists
+    as_list = generate_as_list(asbar, n_list)
+    d_list  = generate_depth_list(d_list)
+    
+    # Compute pure axial capacities (Cell 1)
+    po = calculate_po(fcprime, fy, b, h, as_list)
+    pt = calculate_pt(fy, as_list)
+    
+    print(f"Pure axial compression load, Po = {po:,.0f} N")
+    print(f"Pure axial tension load,     Pt = {pt:,.0f} N\n")
+    
+    # Compute P–M diagram key points (Cell 2)
+    results = points_on_pm_diagram(fcprime, fy, b, h, betafactor, epsgamma, Es, as_list, d_list)
+    pB = results["balanced"]["P"]
+    mB = results["balanced"]["M"]
+    pA = results["above"]["P"]
+    mA = results["above"]["M"]
+    pL = results["below"]["P"]
+    mL = results["below"]["M"]
+    
+    for which in ["balanced", "above", "below"]:
+        out = results[which]
+        print(f"{which.upper()} POINT:")
+        print(f"  c = {out['c']:.3f} mm")
+        print(f"  P = {out['P']:.2f} N")
+        print(f"  M = {out['M']:.1f} N·mm")
+        print(f"  φ = {out['phi']:.6f} (1/mm)")
+        print(f"  f_s_i list = {out['fs_list']}\n")
+    
+    # Plot the P–M interaction diagram (Cell 3)
     plot_pm_points_with_curve(po, pt, mB, pB, mA, pA, mL, pL, fcprime, asbar, fy)
